@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import os
@@ -527,5 +528,3 @@ elif page == "📝 Technology Quiz":
 
         else:
             st.warning("📚 Keep practicing! Learning takes time.")
-
-        st.write(f"### 📈 Score Percentage: {percentage:.0f}%")
