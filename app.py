@@ -44,71 +44,107 @@ if page == "🏠 Home":
     st.success("✨ Learn smarter. Track better. Grow stronger!")
 
 # STUDY TRACKER PAGE
+# SMART STUDY PLANNER
 elif page == "📚 Study Tracker":
-    st.title("📚 Study Tracker")
-    st.write("Track your subjects, topics, study hours, and completed tasks.")
+    st.title("📚 Smart Study Planner")
+    st.write("Get an AI-powered study plan with estimated study time and learning resources.")
 
-    # CSV file name
-    file_name = "study_data.csv"
+    st.subheader("🎯 Plan Your Study Session")
 
-    # Create the CSV file if it doesn't exist
-    if not os.path.exists(file_name):
-        df = pd.DataFrame(
-            columns=["Date", "Subject", "Topic", "Study Hours", "Status"]
-        )
-        df.to_csv(file_name, index=False)
+    subject = st.selectbox(
+        "📖 Select Subject",
+        [
+            "Python",
+            "Java",
+            "Machine Learning",
+            "Data Structures",
+            "DBMS",
+            "Operating Systems",
+            "Computer Networks",
+            "Artificial Intelligence",
+            "Other"
+        ]
+    )
 
-    # Study session form
-    with st.form("study_form", clear_on_submit=True):
-        subject = st.text_input("📖 Subject")
-        topic = st.text_input("📝 Topic")
+    topic = st.text_input(
+        "📝 Enter the Topic",
+        placeholder="Example: Linear Regression"
+    )
 
-        study_hours = st.number_input(
-            "⏱️ Study Hours",
-            min_value=0.0,
-            max_value=24.0,
-            step=0.5
-        )
+    learning_level = st.selectbox(
+        "📊 Your Current Level",
+        ["Beginner", "Intermediate", "Advanced"]
+    )
 
-        status = st.selectbox(
-            "✅ Task Status",
-            ["Completed", "In Progress", "Not Started"]
-        )
+    if st.button("✨ Generate Smart Study Plan"):
 
-        submitted = st.form_submit_button("➕ Add Study Session")
+        if topic.strip():
 
-    # Save data
-    if submitted:
-        if subject and topic:
-            new_data = pd.DataFrame({
-                "Date": [datetime.now().strftime("%Y-%m-%d")],
-                "Subject": [subject],
-                "Topic": [topic],
-                "Study Hours": [study_hours],
-                "Status": [status]
-            })
+            try:
+                api_key = os.getenv("GEMINI_API_KEY")
 
-            new_data.to_csv(
-                file_name,
-                mode="a",
-                header=False,
-                index=False
-            )
+                if not api_key:
+                    st.error(
+                        "⚠️ Gemini API key not found. Please check your configuration."
+                    )
 
-            st.success("🎉 Study session saved successfully!")
+                else:
+                    client = genai.Client(api_key=api_key)
+
+                    prompt = f"""
+You are StudySmart AI, an intelligent study planning assistant.
+
+Create a personalized study plan for a student.
+
+Subject: {subject}
+Topic: {topic}
+Student Level: {learning_level}
+
+Provide the response using exactly these sections:
+
+⏱️ MINIMUM STUDY TIME:
+Give a realistic minimum estimated time.
+
+⏳ MAXIMUM RECOMMENDED TIME:
+Give a realistic maximum estimated time.
+
+📊 DIFFICULTY LEVEL:
+Beginner, Intermediate, or Advanced.
+
+📚 STEP-BY-STEP STUDY PLAN:
+Give 4 to 6 clear steps with estimated time for each step.
+
+🌐 FREE LEARNING RESOURCES:
+Recommend suitable reliable free online resources.
+Include resource names and what the student should learn from them.
+Do not invent fake links.
+
+💡 STUDY TIP:
+Give one personalized practical study tip.
+
+Make the answer clear, simple, and student-friendly.
+"""
+
+                    with st.spinner(
+                        "🤖 StudySmart AI is creating your personalized plan..."
+                    ):
+
+                        response = client.models.generate_content(
+                            model="gemini-3.6-flash",
+                            contents=prompt
+                        )
+
+                    st.divider()
+
+                    st.subheader("🎓 Your Personalized Study Plan")
+
+                    st.write(response.text)
+
+            except Exception as e:
+                st.error(f"⚠️ Something went wrong: {e}")
 
         else:
-            st.warning("⚠️ Please enter both Subject and Topic.")
-
-    # Show saved data
-    st.subheader("📋 Your Study History")
-
-    study_data = pd.read_csv(file_name)
-
-    if not study_data.empty:
-        st.dataframe(study_data, use_container_width=True)
-    else:
-        st.info("No study sessions added yet.")
+            st.warning("⚠️ Please enter a topic first!")
 # ANALYTICS PAGE
 elif page == "📊 Analytics Dashboard":
     st.title("📊 Analytics Dashboard")
